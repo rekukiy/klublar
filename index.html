@@ -71,8 +71,42 @@
   .center { text-align: center; }
   .skel { height: 96px; border-radius: 14px; margin-bottom: 10px; background: linear-gradient(90deg, var(--card) 25%, var(--line) 50%, var(--card) 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
   @keyframes sh { to { background-position: -200% 0; } }
+  body.has-bar .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
   .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #101828; color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 9; max-width: 90vw; }
   .stale { font-size: 12px; color: var(--muted); text-align: center; margin: -4px 0 8px; }
+  /* Ustoz kabineti */
+  body.has-bar .app { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 8; background: var(--card); border-top: 1px solid var(--line); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+  .savebar .in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+  .savebar b { flex: 1; font-size: 13.5px; font-weight: 600; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--card); border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 10px; }
+  .seg button { border: 0; background: transparent; border-radius: 9px; padding: 8px 4px; font-weight: 600; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .grp { cursor: pointer; }
+  .grp .row { margin-top: 6px; }
+  .list { background: var(--card); border-radius: 14px; overflow: hidden; margin-bottom: 10px; }
+  .li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line); }
+  .li:first-child { border-top: 0; }
+  .li.chg { background: rgba(31, 79, 209, .06); }
+  .li .n { flex: none; width: 22px; color: var(--muted); font-size: 12.5px; text-align: right; }
+  .li .who { flex: 1; min-width: 0; }
+  .li .who b { display: block; font-weight: 600; font-size: 14.5px; line-height: 1.25; }
+  .li .who small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .li.wrap { flex-wrap: wrap; }
+  .mk { display: inline-flex; gap: 6px; flex: none; }
+  .mk button { width: 40px; height: 36px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); font-weight: 700; font-size: 15px; cursor: pointer; color: var(--muted); }
+  .mk button.k[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .mk button.y[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .mk button.s[aria-pressed="true"] { background: var(--wait); border-color: var(--wait); color: #fff; }
+  input.reason, input.topic { width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; }
+  input.reason { margin-left: 32px; width: calc(100% - 32px); border-color: var(--bad); }
+  .cal .top2 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .cal .top2 b { flex: 1; }
+  .cal.today { outline: 2px solid var(--accent); }
+  select.pick { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 15px; margin-bottom: 10px; }
+  .tools { display: flex; gap: 8px; margin-bottom: 10px; }
+  .tools select { flex: 1; min-width: 0; padding: 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 14px; }
+  .b.acc { color: var(--accent-ink); background: var(--accent); }
 </style>
 </head>
 <body>
@@ -105,13 +139,14 @@
 
   /* ===== Server ===== */
   async function api(action, extra) {
-    if (DEMO) return DEMO_API(action, extra || {});
-    const res = await fetch(API + '?api=1', { method: 'POST', body: JSON.stringify(Object.assign({ action: action, initData: INIT, lang: LANG }, extra || {})) });
+    if (DEMO) return DEMO_API(action, Object.assign({ teacher: TV.teacher || '' }, extra || {}));
+    const res = await fetch(API + '?api=1', { method: 'POST', body: JSON.stringify(Object.assign({ action: action, initData: INIT, lang: LANG, teacher: TV.teacher || '' }, extra || {})) });
     return res.json();
   }
 
   /* ===== Holat ===== */
   let S = null, view = 'home', sub = {};
+  const TV = { teacher: store.get('mini_teacher') || '', key: null, seg: 'tarkib', appr: {}, draft: {}, attDate: null };
   function toast(msg) { const t = el('div', 'toast', msg); document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
   function haptic(kind) { try { tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
   function confirmBox(text) {
@@ -166,7 +201,8 @@
     document.documentElement.lang = LANG;
     $app.textContent = '';
     if (!S.linked) return view === 'nocode' ? renderNoCode() : renderLink();
-    if (S.role === 'staff') { back(null); $app.appendChild(header(S.name)); const c = el('div', 'card'); c.appendChild(el('p', null, L("Siz ustoz sifatida bog'langansiz. So'rovlar va xabarlar botga keladi.", 'Вы привязаны как преподаватель. Запросы и уведомления приходят в бот.'))); $app.appendChild(c); return; }
+    hideBar();
+    if (S.role === 'staff') return renderStaff();
     if (view === 'pick') return renderPick();
     if (view === 'reg') return renderReg();
     renderHome();
@@ -340,16 +376,253 @@
     c.append(b, again); $app.appendChild(c);
   }
 
+  /* ===== Ustoz kabineti (klub rahbarlari) ===== */
+  const kOf = st => st.cls + '|' + st.name;
+  const T = () => S.staff;
+  const sess = () => T() && T().sessions.find(x => x.key === TV.key);
+  const sortedSessions = () => T().sessions.slice().sort((a, b) => T().days.indexOf(a.day) - T().days.indexOf(b.day));
+  const counts = s => { const ok = s.students.filter(x => x.approval === 'Tasdiqlandi').length, bad = s.students.filter(x => x.approval === 'Rad etildi').length; return { ok: ok, bad: bad, wait: s.students.length - ok - bad, n: s.students.length }; };
+  const active = s => s.students.filter(st => st.approval !== 'Rad etildi');
+  const missed = s => s.students.length ? s.dates.filter(d => d < T().today && !s.marks[d]) : [];
+  function groupPct(s) { let k = 0, n = 0; Object.values(s.marks).forEach(m => Object.values(m).forEach(v => { n++; if (v === 'Keldi') k++; })); return n ? Math.round(k / n * 100) : null; }
+  function stPct(s, st) { const ds = Object.keys(s.marks); if (!ds.length) return null; return Math.round(ds.filter(d => s.marks[d][kOf(st)] === 'Keldi').length / ds.length * 100); }
+  const restName = n => String(n).split(' ').slice(2).join(' ');
+  function saveBar(text, label, disabled, fn) {
+    let bar = document.getElementById('savebar');
+    if (!bar) { bar = el('div', 'savebar'); bar.id = 'savebar'; const w = el('div', 'in'); w.append(el('b'), el('button', 'btn')); bar.appendChild(w); document.body.appendChild(bar); }
+    document.body.classList.add('has-bar');
+    bar.querySelector('b').textContent = text;
+    const b = bar.querySelector('.btn'); b.textContent = label; b.disabled = disabled; b.onclick = fn;
+    return b;
+  }
+  function hideBar() { const b = document.getElementById('savebar'); if (b) b.remove(); document.body.classList.remove('has-bar'); }
+  function openGroup(key, seg) { TV.key = key; TV.seg = seg || 'tarkib'; TV.appr = {}; TV.draft = {}; TV.attDate = null; view = 'group'; render(); window.scrollTo(0, 0); }
+
+  function renderStaff() {
+    if (S.gone || !S.staff) {
+      back(null); $app.appendChild(header(S.name));
+      const c = el('div', 'card'); c.appendChild(el('p', null, L("Siz «Ustozlar» ro'yxatida topilmadingiz. Koordinatorga murojaat qiling.", 'Вас нет в списке «Ustozlar». Обратитесь к координатору.'))); $app.appendChild(c); return;
+    }
+    if (view === 'group' && sess()) return renderGroup();
+    view = 'home'; TV.key = null;
+    renderTeacherHome();
+  }
+
+  function renderTeacherHome() {
+    back(null);
+    const D = T(), boss = D.user.role === 'rahbar';
+    $app.appendChild(header(D.teacher || S.name, L('Ustoz kabineti', 'Кабинет преподавателя') + ' · ' + String(D.chorak).replace(/(\d)-chorak/, L('$1-chorak', '$1-я четверть'))));
+    if (S._stale) $app.appendChild(el('div', 'stale', L('yangilanmoqda…', 'обновляется…')));
+    if (boss) {
+      const sel = el('select', 'pick'); const o0 = el('option', null, L('Ustozni tanlang…', 'Выберите преподавателя…')); o0.value = ''; sel.appendChild(o0);
+      D.teachers.forEach(t => { const o = el('option', null, t); o.value = t; o.selected = t === D.teacher; sel.appendChild(o); });
+      sel.onchange = async () => { TV.teacher = sel.value; store.set('mini_teacher', TV.teacher); sel.disabled = true; await refresh(); };
+      $app.appendChild(sel);
+      if (!D.teacher) { $app.appendChild(el('div', 'card muted', L("Rahbar sifatida istalgan ustozning guruhlari, kalendari va davomatini ko'rishingiz mumkin.", 'Как руководитель вы можете открыть группы, календарь и посещаемость любого преподавателя.'))); return; }
+    }
+    const list = sortedSessions();
+    const wait = list.reduce((a, s) => a + counts(s).wait, 0), miss = list.reduce((a, s) => a + missed(s).length, 0);
+    if (wait) $app.appendChild(el('div', 'banner', L(wait + " ta o'quvchi tasdig'ingizni kutmoqda.", wait + ' учеников ждут вашего подтверждения.')));
+    if (miss) $app.appendChild(el('div', 'banner', L(miss + " ta o'tgan mashg'ulot uchun davomat kiritilmagan.", 'Не отмечена посещаемость за ' + miss + ' прошедших занятий.')));
+    if (!list.length) { $app.appendChild(el('div', 'card center muted', L('Guruh topilmadi.', 'Группы не найдены.'))); return; }
+    list.forEach(s => {
+      const k = counts(s), next = s.dates.find(d => d >= D.today), pct = groupPct(s), ms = missed(s).length;
+      const c = el('div', 'card day grp'); c.setAttribute('role', 'button'); c.tabIndex = 0;
+      const h = el('div', 'h'); h.appendChild(el('span', 'dn', dn(s.day)));
+      if (next === D.today) h.appendChild(el('span', 'today', L('bugun 15:45', 'сегодня 15:45')));
+      c.appendChild(h);
+      c.appendChild(el('div', 'cn', s.name));
+      c.appendChild(el('div', 'meta', room(s.room) + ' · ' + L(k.n + '/' + s.capacity + " o'quvchi", 'учеников: ' + k.n + '/' + s.capacity)));
+      const bar = el('div', 'bar'); bar.style.cssText = 'margin-top:6px;display:flex';
+      [['var(--ok)', k.ok], ['var(--wait)', k.wait]].forEach(([col, x]) => { if (x > 0) { const i = el('i'); i.style.cssText = 'display:inline-block;height:100%;background:' + col + ';width:' + Math.min(100, x / Math.max(1, s.capacity) * 100) + '%'; bar.appendChild(i); } });
+      c.appendChild(bar);
+      const r = el('div', 'row');
+      if (k.wait) r.appendChild(el('span', 'b wait', L('⏳ ' + k.wait + ' kutmoqda', '⏳ ждут: ' + k.wait)));
+      if (k.bad) r.appendChild(el('span', 'b bad', L('✗ ' + k.bad + ' rad', '✗ откл.: ' + k.bad)));
+      if (ms) r.appendChild(el('span', 'b bad', L(ms + ' davomat yo’q', 'нет отметок: ' + ms)));
+      if (pct != null) r.appendChild(el('span', 'b ' + (pct >= 80 ? 'ok' : 'wait'), L('Davomat ', 'Посещ. ') + pct + '%'));
+      c.appendChild(r);
+      if (next) { const n = el('div', 'next'); n.appendChild(el('b', null, L('Keyingi: ', 'Следующее: ') + human(next))); if (s.plan[next]) n.appendChild(document.createTextNode(' — ' + s.plan[next])); c.appendChild(n); }
+      c.onclick = () => openGroup(s.key, k.wait ? 'tarkib' : (next === D.today || ms ? 'davomat' : 'kalendar'));
+      $app.appendChild(c);
+    });
+    if (D.quarter && D.quarter.start) $app.appendChild(el('p', 'muted center', L('Chorak: ', 'Четверть: ') + human(D.quarter.start) + ' — ' + human(D.quarter.end) + '. ' + L('Sertifikat uchun kamida 80% davomat.', 'Для сертификата — посещаемость от 80%.')));
+  }
+
+  function renderGroup() {
+    const s = sess(), k = counts(s);
+    back(async () => { if (Object.keys(TV.appr).length && !(await confirmBox(L("Saqlanmagan o'zgarishlar yo'qoladi. Chiqasizmi?", 'Несохранённые изменения пропадут. Выйти?')))) return; view = 'home'; TV.key = null; TV.appr = {}; render(); window.scrollTo(0, 0); });
+    $app.appendChild(header(s.name, dn(s.day) + ' · ' + room(s.room) + ' · ' + k.n + '/' + s.capacity));
+    if (!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.BackButton && INIT)) {
+      const bk = el('button', 'btn ghost', '← ' + L('Guruhlarim', 'Мои группы')); bk.onclick = () => { view = 'home'; render(); }; $app.appendChild(bk);
+    }
+    const seg = el('div', 'seg');
+    [['tarkib', L('Tarkib', 'Состав') + (k.wait ? ' (' + k.wait + ')' : '')], ['kalendar', L('Kalendar', 'Календарь')], ['davomat', L('Davomat', 'Посещаемость')]].forEach(([v, label]) => {
+      const b = el('button', null, label); b.type = 'button'; b.setAttribute('aria-pressed', String(TV.seg === v));
+      b.onclick = () => { TV.seg = v; TV.appr = {}; if (v !== 'davomat') TV.attDate = null; render(); };
+      seg.appendChild(b);
+    });
+    $app.appendChild(seg);
+    if (TV.seg === 'kalendar') return renderCalendar(s);
+    if (TV.seg === 'davomat') return renderAttendance(s);
+    renderRoster(s);
+  }
+
+  function renderRoster(s) {
+    if (!s.students.length) { $app.appendChild(el('div', 'card center muted', L('Bu guruhga hali hech kim yozilmagan.', 'В эту группу ещё никто не записан.'))); return; }
+    $app.appendChild(el('p', 'muted', L("✓ — o'quvchi guruhda qoladi; ✗ — sababini yozing, koordinator hal qiladi.", '✓ — ученик остаётся в группе; ✗ — укажите причину, решит координатор.'))).style.margin = '0 4px 8px';
+    if (s.students.some(st => !st.approval)) {
+      const all = el('button', 'btn sec full', L('Kutayotganlarni tasdiqlash', 'Подтвердить всех ожидающих'));
+      all.style.marginBottom = '10px';
+      all.onclick = () => { s.students.forEach(st => { if (!st.approval && !TV.appr[kOf(st)]) TV.appr[kOf(st)] = { status: 'Tasdiqlandi', note: '' }; }); render(); };
+      $app.appendChild(all);
+    }
+    const box = el('div', 'list');
+    s.students.forEach((st, i) => {
+      const cur = TV.appr[kOf(st)] || (st.approval ? { status: st.approval, note: st.note } : null);
+      const li = el('div', 'li wrap' + (TV.appr[kOf(st)] ? ' chg' : ''));
+      li.appendChild(el('span', 'n', String(i + 1)));
+      const w = el('div', 'who'); w.appendChild(el('b', null, shortName(st.name)));
+      w.appendChild(el('small', null, st.cls + ' · ' + (st.approval === 'Tasdiqlandi' ? L('tasdiqlangan', 'подтверждён') : st.approval === 'Rad etildi' ? L('rad etilgan', 'отклонён') : L('kutilmoqda', 'ожидает'))));
+      li.appendChild(w);
+      const m = el('div', 'mk');
+      [['Tasdiqlandi', 'k', '✓'], ['Rad etildi', 'y', '✗']].forEach(([v, cl, sym]) => {
+        const b = el('button', cl, sym); b.type = 'button'; b.title = v; b.setAttribute('aria-pressed', String(!!cur && cur.status === v));
+        b.onclick = () => { TV.appr[kOf(st)] = { status: v, note: (TV.appr[kOf(st)] && TV.appr[kOf(st)].note) || st.note || '' }; render(); };
+        m.appendChild(b);
+      });
+      li.appendChild(m);
+      if (cur && cur.status === 'Rad etildi') {
+        const r = el('input', 'reason'); r.placeholder = L('Sabab (majburiy)', 'Причина (обязательно)'); r.value = cur.note || ''; r.maxLength = 200;
+        r.oninput = () => { TV.appr[kOf(st)] = { status: 'Rad etildi', note: r.value }; bar(); };
+        li.appendChild(r);
+      }
+      box.appendChild(li);
+    });
+    $app.appendChild(box);
+    const bar = () => {
+      const items = Object.keys(TV.appr).map(key => { const p = key.indexOf('|'); return { cls: key.slice(0, p), name: key.slice(p + 1), status: TV.appr[key].status, note: TV.appr[key].note }; });
+      if (!items.length) return hideBar();
+      const bad = items.some(x => x.status === 'Rad etildi' && !String(x.note || '').trim());
+      saveBar(L(items.length + " ta o'zgarish", 'Изменений: ' + items.length) + (bad ? L(' · sababni yozing', ' · укажите причину') : ''), L('Saqlash', 'Сохранить'), bad, async () => {
+        const b = document.querySelector('#savebar .btn'); b.disabled = true; b.textContent = L('Saqlanmoqda…', 'Сохранение…');
+        let r = null; try { r = await api('approve', { payload: { clubId: s.clubId, day: s.day, items: items } }); } catch (e) { r = { ok: false, message: L('Aloqa xatosi.', 'Ошибка связи.') }; }
+        if (r && r.ok) { haptic('success'); TV.appr = {}; setState(r); toast(L('Saqlandi', 'Сохранено')); }
+        else { haptic('error'); toast((r && r.message) || 'Xatolik'); b.disabled = false; b.textContent = L('Saqlash', 'Сохранить'); }
+      });
+    };
+    bar();
+  }
+
+  function renderCalendar(s) {
+    const D = T(), pend = counts(s).wait;
+    if (pend) $app.appendChild(el('div', 'banner', L(pend + " ta o'quvchi hali tasdiqlanmagan — «Tarkib»da tasdiqlang.", pend + ' учеников ещё не подтверждены — см. «Состав».')));
+    $app.appendChild(el('p', 'muted', L('Har bir sanaga mavzu yozing — maydondan chiqqanda saqlanadi. Mavzu o’quvchilarga ham ko’rinadi.', 'Впишите тему на каждую дату — сохраняется при выходе из поля. Ученики тоже её видят.'))).style.margin = '0 4px 8px';
+    if (!s.dates.length) { $app.appendChild(el('div', 'card center muted', L('Chorak sanalari belgilanmagan.', 'Даты четверти не заданы.'))); return; }
+    s.dates.forEach((d, i) => {
+      const marked = s.marks[d], past = d < D.today, today = d === D.today, last = i === s.dates.length - 1;
+      const c = el('div', 'card cal' + (today ? ' today' : ''));
+      const t = el('div', 'top2'); t.appendChild(el('span', 'muted', String(i + 1))); t.appendChild(el('b', null, human(d)));
+      let st;
+      if (marked) { const n = Object.values(marked).filter(v => v === 'Keldi').length; st = el('span', 'b ok', n + '/' + Object.keys(marked).length + L(' keldi', ' пришли')); }
+      else if (past) st = el('span', 'b bad', L('Kiritilmagan', 'Не отмечено'));
+      else if (today) st = el('span', 'b acc', L('Bugun', 'Сегодня'));
+      else st = el('span', 'b', L('Kelgusi', 'Предстоит'));
+      t.appendChild(st);
+      if (d <= D.today) { const b = el('button', 'btn ' + (marked ? 'sec' : ''), marked ? '✎' : L('Davomat', 'Отметить')); b.style.padding = '6px 10px'; b.onclick = () => { TV.seg = 'davomat'; TV.attDate = d; TV.draft = Object.assign({}, s.marks[d] || {}); render(); window.scrollTo(0, 0); }; t.appendChild(b); }
+      c.appendChild(t);
+      const inp = el('input', 'topic'); inp.type = 'text'; inp.maxLength = 300; inp.value = s.plan[d] || '';
+      inp.placeholder = last ? L('Yakuniy natija taqdimoti', 'Итоговая презентация') : L('Mavzu…', 'Тема…');
+      inp.onchange = async () => {
+        let r = null; try { r = await api('plan', { payload: { clubId: s.clubId, day: s.day, date: d, topic: inp.value } }); } catch (e) { r = null; }
+        if (r && r.ok) { s.plan[d] = inp.value; store.set('mini_state', JSON.stringify(S)); toast(L('Mavzu saqlandi', 'Тема сохранена')); } else toast((r && r.message) || L('Aloqa xatosi.', 'Ошибка связи.'));
+      };
+      c.appendChild(inp);
+      $app.appendChild(c);
+    });
+  }
+
+  function renderAttendance(s) {
+    const D = T(), avail = s.dates.filter(d => d <= D.today);
+    if (!avail.length) { $app.appendChild(el('div', 'card center muted', L("Hali mashg'ulot o'tmagan. Birinchisi: ", 'Занятий ещё не было. Первое: ') + (s.dates[0] ? human(s.dates[0]) : '—'))); return; }
+    if (!TV.attDate || avail.indexOf(TV.attDate) === -1) {
+      TV.attDate = avail.indexOf(D.today) !== -1 ? D.today : (avail.slice().reverse().find(d => !s.marks[d]) || avail[avail.length - 1]);
+      TV.draft = Object.assign({}, s.marks[TV.attDate] || {});
+    }
+    const roster = active(s);
+    const tools = el('div', 'tools');
+    const sel = el('select');
+    avail.slice().reverse().forEach(d => { const o = el('option', null, human(d) + (d === D.today ? L(' · bugun', ' · сегодня') : '') + (s.marks[d] ? ' ✓' : L(' · kiritilmagan', ' · не отмечено'))); o.value = d; o.selected = d === TV.attDate; sel.appendChild(o); });
+    sel.onchange = () => { TV.attDate = sel.value; TV.draft = Object.assign({}, s.marks[TV.attDate] || {}); render(); };
+    const all = el('button', 'btn sec', L('Hammasi keldi', 'Все пришли')); all.onclick = () => { roster.forEach(st => { TV.draft[kOf(st)] = 'Keldi'; }); render(); };
+    tools.append(sel, all); $app.appendChild(tools);
+    if (s.marks[TV.attDate]) $app.appendChild(el('p', 'muted', L("Bu sana saqlangan. O'zgartirib, qayta saqlash mumkin.", 'Эта дата уже сохранена. Можно изменить и сохранить снова.'))).style.margin = '0 4px 8px';
+    if (!roster.length) { $app.appendChild(el('div', 'card center muted', L("Guruhda o'quvchi yo'q.", 'В группе нет учеников.'))); return; }
+    const box = el('div', 'list');
+    roster.forEach((st, i) => {
+      const p = stPct(s, st);
+      const li = el('div', 'li');
+      li.appendChild(el('span', 'n', String(i + 1)));
+      const w = el('div', 'who'); w.appendChild(el('b', null, shortName(st.name))); w.appendChild(el('small', null, st.cls + (p != null ? ' · ' + p + '%' : '') + (st.approval ? '' : L(' · tasdiqlanmagan', ' · не подтв.')))); li.appendChild(w);
+      const m = el('div', 'mk');
+      [['Keldi', 'k', '✓'], ['Kelmadi', 'y', '✗'], ['Sababli', 's', 'S']].forEach(([v, cl, sym]) => {
+        const b = el('button', cl, sym); b.type = 'button'; b.title = v; b.setAttribute('aria-pressed', String(TV.draft[kOf(st)] === v));
+        b.onclick = () => { TV.draft[kOf(st)] = v; render(); };
+        m.appendChild(b);
+      });
+      li.appendChild(m); box.appendChild(li);
+    });
+    $app.appendChild(box);
+    $app.appendChild(el('p', 'muted center', L('✓ Keldi · ✗ Kelmadi · S Sababli', '✓ Пришёл · ✗ Не пришёл · S По уваж. причине')));
+    const n = roster.filter(st => TV.draft[kOf(st)]).length;
+    saveBar(human(TV.attDate) + ': ' + n + '/' + roster.length, L('Saqlash', 'Сохранить'), n < roster.length, async () => {
+      const b = document.querySelector('#savebar .btn'); b.disabled = true; b.textContent = L('Saqlanmoqda…', 'Сохранение…');
+      const marks = roster.map(st => ({ cls: st.cls, name: st.name, status: TV.draft[kOf(st)] }));
+      let r = null; try { r = await api('attend', { payload: { clubId: s.clubId, day: s.day, date: TV.attDate, marks: marks } }); } catch (e) { r = { ok: false, message: L('Aloqa xatosi.', 'Ошибка связи.') }; }
+      if (r && r.ok) { haptic('success'); s.marks[TV.attDate] = Object.assign({}, TV.draft); store.set('mini_state', JSON.stringify(S)); toast(L('Saqlandi: ', 'Сохранено: ') + r.saved); render(); }
+      else { haptic('error'); toast((r && r.message) || 'Xatolik'); b.disabled = false; b.textContent = L('Saqlash', 'Сохранить'); }
+    });
+  }
+
   /* ===== Namuna (brauzerda ?demo) ===== */
   const DEMO_API = (function () {
     const opts = d => ['AI club', 'Finance club', 'MUN club', 'Dream University club', 'Zakovat club', 'Debate club'].map((n, i) => ({ id: d.slice(0, 2) + i, name: n, teacher: ['Mr. Ravshan', "Mr. A'zamjon", 'Ms. Yulduz', 'Mr. Jahongir', 'Mr. Adhamjon', 'Mr. Farrux'][i], room: String(407 + i), free: i === 3 ? 0 : 25 - 5 * i % 23, cap: 25 }));
     let st = { ok: true, linked: false };
+    const WEEK = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+    let staffCache = null;
+    function staffDemo(boss, teacher) {
+      const q = { start: '2026-11-09', end: '2026-12-26', holidays: ['2026-12-08'] }, today = '2026-11-18';
+      const datesFor = day => { const out = [], d = new Date(q.start + 'T12:00:00'), e = new Date(q.end + 'T12:00:00'); while (d <= e) { const s = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); if (WEEK[d.getDay()] === day && q.holidays.indexOf(s) === -1) out.push(s); d.setDate(d.getDate() + 1); } return out; };
+      if (!staffCache) {
+        const C = [['RV1', 'AI club', 'Dushanba', '419'], ['RV1', 'AI club', 'Chorshanba', '419'], ['RV2', 'Philosophy club', 'Seshanba', '408'], ['RV2', 'Philosophy club', 'Payshanba', '408']];
+        const cl = ['9-B', '9-C', '10-A', '10-B', '11-A', '11-B'];
+        staffCache = C.map(([id, name, day, rm], j) => {
+          const students = Array.from({ length: 10 + j * 3 }, (_, i) => ({ cls: cl[i % 6], name: 'Namuna' + (i + 1) + " O'quvchi " + (i % 2 ? "Ali o'g'li" : 'Vali qizi'),
+            approval: j === 0 ? (i < 7 ? 'Tasdiqlandi' : (i === 7 ? 'Rad etildi' : '')) : 'Tasdiqlandi', note: i === 7 && j === 0 ? 'Boshqa klub mosroq' : '' }));
+          const dates = datesFor(day), marks = {}, plan = {};
+          dates.filter(d => d < today).forEach((d, w) => { if (j === 1) return; marks[d] = {}; students.filter(s => s.approval !== 'Rad etildi').forEach((s, i) => { marks[d][s.cls + '|' + s.name] = (i + w) % 6 === 0 ? 'Kelmadi' : 'Keldi'; }); });
+          if (j === 0) { plan[dates[0]] = "Kirish: sun'iy intellekt nima?"; plan[dates[1]] = 'Prompt asoslari: rol, kontekst, format'; }
+          return { key: id + '@' + day, clubId: id, name: name, teacher: 'Mr. Ravshan', day: day, room: rm, capacity: 25, students: students, marks: marks, dates: dates, plan: plan };
+        });
+      }
+      const who = boss ? (teacher || '') : 'Mr. Ravshan';
+      return { ok: true, linked: true, role: 'staff', name: boss ? 'Uchqun Vohidov' : 'Mr. Ravshan',
+        staff: { ok: true, user: { name: boss ? 'Uchqun Vohidov' : 'Mr. Ravshan', role: boss ? 'rahbar' : 'ustoz' }, teacher: who,
+          teachers: ['Mr. Adhamjon', "Mr. A'zamjon", 'Mr. Ravshan', 'Ms. Yulduz'], chorak: '2-chorak, 2026–2027',
+          days: ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'], today: today, quarter: q, sessions: who === 'Mr. Ravshan' ? staffCache : [] } };
+    }
     const full = () => ({ ok: true, linked: true, role: 'student', name: "Namuna O'quvchi Ali o'g'li", cls: '10-C', chorak: '2-chorak, 2026–2027', busy: 'Juma', registered: true, today: '2026-11-16',
       window: { open: true, end: '15.11 23:59' },
       days: ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'].map((d, i) => d === 'Juma' ? { day: d, lesson: true } : { day: d, clubId: d.slice(0, 2) + i, club: { name: opts(d)[i].name, teacher: opts(d)[i].teacher, room: opts(d)[i].room }, status: ['Tasdiqlandi', '', 'Tasdiqlandi', 'Rad etildi'][i], used: i === 2, att: { k: [2, 1, 2, 0][i], n: [2, 2, 2, 0][i] }, next: { date: ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19'][i], topic: i === 0 ? "Prompt asoslari: rol, kontekst, format" : '' } }),
       options: Object.fromEntries(['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba'].map(d => [d, opts(d)])) });
     return (action, x) => new Promise(res => setTimeout(() => {
-      if (action === 'link') { if (x.code === '123456') { st = full(); res(st); } else res({ ok: false, message: L('Kod topilmadi.', 'Код не найден.') }); return; }
+      if (action === 'link') { if (x.code === '123456') { st = full(); res(st); } else if (x.code === '111111' || x.code === '000000') { st = staffDemo(x.code === '000000'); res(st); } else res({ ok: false, message: L('Kod topilmadi.', 'Код не найден.') }); return; }
+      if (st.role === 'staff') {
+        if (action === 'me') { st = staffDemo(st.staff.user.role === 'rahbar', x.teacher); return res(st); }
+        if (action === 'approve') { const s = st.staff.sessions.find(z => z.clubId === x.payload.clubId && z.day === x.payload.day); x.payload.items.forEach(i => { const q = s.students.find(z => z.cls === i.cls && z.name === i.name); q.approval = i.status; q.note = i.note; }); return res(Object.assign({}, st, { saved: x.payload.items.length })); }
+        if (action === 'plan') return res({ ok: true });
+        if (action === 'attend') return res({ ok: true, saved: x.payload.marks.length });
+      }
       if (action === 'classes') return res({ ok: true, classes: { '10-C': [{ i: 0, name: 'Namuna Bir', taken: false }, { i: 1, name: 'Namuna Ikki', taken: true }], '9-A': [] } });
       if (action === 'request') return res({ ok: true, message: L("So'rov kuratorga yuborildi.", 'Запрос отправлен куратору.') });
       if (action === 'change') { const d = st.days.find(z => z.day === x.day); const o = st.options[x.day].find(z => z.id === x.clubId); d.clubId = o.id; d.club = { name: o.name, teacher: o.teacher, room: o.room }; d.status = ''; d.used = true; return res(st); }
