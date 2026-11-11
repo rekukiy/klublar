@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Klublarim · Registan</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-secondary-bg-color, #f2f3f5);
+    --card: var(--tg-theme-bg-color, #ffffff);
+    --ink: var(--tg-theme-text-color, #101828);
+    --muted: var(--tg-theme-hint-color, #667085);
+    --accent: var(--tg-theme-button-color, #1f4fd1);
+    --accent-ink: var(--tg-theme-button-text-color, #ffffff);
+    --link: var(--tg-theme-link-color, #1f4fd1);
+    --line: rgba(127, 127, 127, .18);
+    --ok: #12b76a; --wait: #f79009; --bad: #f04438;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 -apple-system, "SF Pro Text", Roboto, "Segoe UI", Inter, Arial, sans-serif; }
+  button, input { font: inherit; color: inherit; }
+  .app { max-width: 560px; margin: 0 auto; padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); }
+  .top { display: flex; align-items: center; gap: 10px; padding: 6px 4px 12px; }
+  .top h1 { margin: 0; font-size: 19px; font-weight: 700; line-height: 1.2; }
+  .top p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .lang { margin-left: auto; display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+  .lang button { border: 0; background: var(--card); padding: 5px 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .banner { border-radius: 12px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 10px; background: var(--card); border-left: 3px solid var(--accent); }
+  .banner.closed { border-left-color: var(--muted); color: var(--muted); }
+  .day { display: grid; gap: 4px; }
+  .day .h { display: flex; align-items: center; gap: 8px; }
+  .day .dn { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .day .today { font-size: 11px; font-weight: 700; color: var(--accent-ink); background: var(--accent); padding: 1px 7px; border-radius: 999px; }
+  .day .cn { font-size: 17px; font-weight: 700; line-height: 1.25; }
+  .day .meta { color: var(--muted); font-size: 13px; }
+  .day.lesson { opacity: .55; }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .b { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--line); }
+  .b.ok { color: #067647; background: rgba(18, 183, 106, .14); }
+  .b.wait { color: #b54708; background: rgba(247, 144, 9, .15); }
+  .b.bad { color: #b42318; background: rgba(240, 68, 56, .14); }
+  .att { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .bar { flex: 1; height: 5px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--ok); }
+  .next { font-size: 13px; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .next b { font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: transparent; color: var(--link); padding: 8px 0; }
+  .btn.sec { background: var(--line); color: var(--ink); }
+  .btn.full { width: 100%; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .day .btn { margin-top: 8px; align-self: flex-start; }
+  .opt { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 8px; cursor: pointer; }
+  .opt .t { flex: 1; min-width: 0; }
+  .opt .t b { display: block; font-weight: 600; }
+  .opt .t small { color: var(--muted); font-size: 12.5px; }
+  .opt .s { flex: none; text-align: right; font-size: 12.5px; color: var(--muted); min-width: 64px; }
+  .opt .s .bar { margin-top: 4px; }
+  .opt .s .bar i { background: var(--accent); }
+  .opt.sel { outline: 2px solid var(--accent); }
+  .opt:disabled { opacity: .45; }
+  .sec-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 14px 4px 8px; }
+  input.code { width: 100%; font-size: 26px; letter-spacing: .45em; text-align: center; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); margin: 10px 0; }
+  .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 10px 0; font-weight: 600; cursor: pointer; }
+  .err { color: var(--bad); font-size: 13.5px; min-height: 18px; margin-top: 6px; }
+  .muted { color: var(--muted); }
+  .center { text-align: center; }
+  .skel { height: 96px; border-radius: 14px; margin-bottom: 10px; background: linear-gradient(90deg, var(--card) 25%, var(--line) 50%, var(--card) 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
+  @keyframes sh { to { background-position: -200% 0; } }
+  .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #101828; color: #fff; padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 9; max-width: 90vw; }
+  .stale { font-size: 12px; color: var(--muted); text-align: center; margin: -4px 0 8px; }
+</style>
+</head>
+<body>
+<div class="app" id="app"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+<script>
+(function () {
+  /* ===== Sozlama: Apps Script veb-ilova manzili ===== */
+  const API = 'https://script.google.com/macros/s/AKfycbylNvBLF6cUZWDs5wRolL4CwSNsFNEfprH9EvyDtF5SVd_NSkpLTX-a984FJl7ggBzfvw/exec';
+
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const INIT = tg && tg.initData ? tg.initData : '';
+  const DEMO = !INIT && /[?&]demo/.test(location.search);
+  if (tg) { try { tg.ready(); tg.expand(); } catch (e) {} }
+  const $app = document.getElementById('app');
+  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+  /* ===== Til ===== */
+  const tgLang = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code;
+  let LANG = store.get('mini_lang') || (/^ru/.test(tgLang || '') ? 'ru' : 'uz');
+  const L = (uz, ru) => LANG === 'ru' ? ru : uz;
+  const DAY_RU = { Dushanba: 'Понедельник', Seshanba: 'Вторник', Chorshanba: 'Среда', Payshanba: 'Четверг', Juma: 'Пятница' };
+  const DAY_IN_RU = { Dushanba: 'понедельник', Seshanba: 'вторник', Chorshanba: 'среду', Payshanba: 'четверг', Juma: 'пятницу' };
+  const dn = d => L(d, DAY_RU[d] || d);
+  const MON_UZ = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
+  const MON_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  const human = s => { const d = new Date(s + 'T12:00:00'); return L(d.getDate() + '-' + MON_UZ[d.getMonth()], d.getDate() + ' ' + MON_RU[d.getMonth()]); };
+  const shortName = n => String(n).split(' ').slice(0, 2).join(' ');
+  const room = r => L(r + '-xona', 'каб. ' + r);
+
+  /* ===== Server ===== */
+  async function api(action, extra) {
+    if (DEMO) return DEMO_API(action, extra || {});
+    const res = await fetch(API + '?api=1', { method: 'POST', body: JSON.stringify(Object.assign({ action: action, initData: INIT, lang: LANG }, extra || {})) });
+    return res.json();
+  }
+
+  /* ===== Holat ===== */
+  let S = null, view = 'home', sub = {};
+  function toast(msg) { const t = el('div', 'toast', msg); document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
+  function haptic(kind) { try { tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
+  function confirmBox(text) {
+    return new Promise(res => {
+      if (tg && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')) tg.showConfirm(text, ok => res(!!ok));
+      else res(window.confirm(text));
+    });
+  }
+  function back(fn) {
+    if (!tg || !tg.BackButton) return;
+    tg.BackButton.offClick(back._fn || (() => {}));
+    if (fn) { back._fn = fn; tg.BackButton.onClick(fn); tg.BackButton.show(); } else tg.BackButton.hide();
+  }
+  function setState(s) {
+    S = s;
+    if (s && s.ok && s.linked) store.set('mini_state', JSON.stringify(s));
+    render();
+  }
+  async function refresh(silent) {
+    try {
+      const s = await api('me');
+      if (!s.ok && s.error === 'auth') return renderMsg(L("Ilovani Telegram ichidan oching (bot → «Klublarim»).", 'Откройте приложение внутри Telegram (бот → «Klublarim»).'));
+      setState(s);
+    } catch (e) {
+      if (!silent) renderMsg(L("Aloqa xatosi. Qayta urinib ko'ring.", 'Ошибка связи. Попробуйте ещё раз.'), true);
+    }
+  }
+
+  /* ===== Ko'rinishlar ===== */
+  function header(title, subtitle) {
+    const h = el('div', 'top'); const t = el('div');
+    t.appendChild(el('h1', null, title)); if (subtitle) t.appendChild(el('p', null, subtitle));
+    h.appendChild(t);
+    const lg = el('div', 'lang');
+    [['uz', 'UZ'], ['ru', 'RU']].forEach(([k, x]) => {
+      const b = el('button', null, x); b.type = 'button'; b.setAttribute('aria-pressed', String(LANG === k));
+      b.onclick = () => { LANG = k; store.set('mini_lang', k); render(); api('me').then(s => { if (s && s.ok) S = s; }).catch(() => {}); };
+      lg.appendChild(b);
+    });
+    h.appendChild(lg);
+    return h;
+  }
+  function renderMsg(text, retry) {
+    $app.textContent = '';
+    $app.appendChild(header('Klublarim'));
+    const c = el('div', 'card center'); c.appendChild(el('p', null, text));
+    if (retry) { const b = el('button', 'btn', L('Qayta urinish', 'Повторить')); b.onclick = () => refresh(); c.appendChild(b); }
+    $app.appendChild(c);
+  }
+  function render() {
+    if (!S) return;
+    document.documentElement.lang = LANG;
+    $app.textContent = '';
+    if (!S.linked) return view === 'nocode' ? renderNoCode() : renderLink();
+    if (S.role === 'staff') { back(null); $app.appendChild(header(S.name)); const c = el('div', 'card'); c.appendChild(el('p', null, L("Siz ustoz sifatida bog'langansiz. So'rovlar va xabarlar botga keladi.", 'Вы привязаны как преподаватель. Запросы и уведомления приходят в бот.'))); $app.appendChild(c); return; }
+    if (view === 'pick') return renderPick();
+    if (view === 'reg') return renderReg();
+    renderHome();
+  }
+
+  function renderLink(err) {
+    back(null);
+    $app.appendChild(header('Klublarim', 'Registan · CLUB HOUR'));
+    const c = el('div', 'card');
+    c.appendChild(el('b', null, L("Akkauntni bog'lash", 'Привязка аккаунта')));
+    c.appendChild(el('p', 'muted', L('Kuratoringiz bergan 6 xonali shaxsiy kodni kiriting.', 'Введите личный 6-значный код от куратора.')));
+    const inp = el('input', 'code'); inp.inputMode = 'numeric'; inp.maxLength = 6; inp.autocomplete = 'one-time-code'; inp.placeholder = '••••••';
+    const b = el('button', 'btn full', L("Bog'lash", 'Привязать')); b.disabled = true;
+    const e = el('div', 'err', err || '');
+    inp.oninput = () => { inp.value = inp.value.replace(/\D/g, ''); b.disabled = inp.value.length !== 6; e.textContent = ''; };
+    b.onclick = async () => {
+      b.disabled = true; b.textContent = L('Tekshirilmoqda…', 'Проверка…');
+      let r = null; try { r = await api('link', { code: inp.value }); } catch (x) { r = { ok: false, message: L('Aloqa xatosi.', 'Ошибка связи.') }; }
+      if (r.ok) { haptic('success'); setState(r); }
+      else { haptic('error'); e.textContent = r.message || 'Xatolik'; b.textContent = L("Bog'lash", 'Привязать'); b.disabled = false; }
+    };
+    c.append(inp, b, e);
+    const nc = el('button', 'btn ghost', L("Kodim yo'q", 'У меня нет кода'));
+    nc.onclick = () => { view = 'nocode'; sub = {}; render(); };
+    c.appendChild(nc);
+    $app.appendChild(c);
+    setTimeout(() => inp.focus(), 50);
+  }
+
+  async function renderNoCode() {
+    back(() => { view = 'home'; sub = {}; render(); });
+    $app.appendChild(header(L("Kodim yo'q", 'Нет кода'), L("Kurator Telegramda tasdiqlaydi", 'Куратор подтвердит в Telegram')));
+    if (!sub.classes) {
+      $app.appendChild(el('div', 'skel'));
+      try { const r = await api('classes'); sub.classes = r.classes || {}; } catch (e) { sub.classes = {}; }
+      return render();
+    }
+    if (sub.sent) { const c = el('div', 'card center'); c.appendChild(el('p', null, sub.sent)); $app.appendChild(c); return; }
+    $app.appendChild(el('div', 'sec-title', L('Sinfingiz', 'Ваш класс')));
+    const ch = el('div', 'chips');
+    Object.keys(sub.classes).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).forEach(c => {
+      const b = el('button', 'chip', c); b.type = 'button'; if (sub.cls === c) { b.style.background = 'var(--accent)'; b.style.color = 'var(--accent-ink)'; }
+      b.onclick = () => { sub.cls = c; sub.idx = null; render(); }; ch.appendChild(b);
+    });
+    $app.appendChild(ch);
+    if (!sub.cls) return;
+    $app.appendChild(el('div', 'sec-title', L('Ismingiz', 'Ваше имя')));
+    sub.classes[sub.cls].filter(x => !x.taken).forEach(x => {
+      const o = el('button', 'opt' + (sub.idx === x.i ? ' sel' : '')); o.type = 'button';
+      const t = el('span', 't'); t.appendChild(el('b', null, x.name)); o.appendChild(t);
+      o.onclick = () => { sub.idx = x.i; render(); };
+      $app.appendChild(o);
+    });
+    if (sub.idx != null) {
+      const b = el('button', 'btn full', L("So'rov yuborish", 'Отправить запрос'));
+      b.onclick = async () => {
+        b.disabled = true;
+        let r = null; try { r = await api('request', { cls: sub.cls, idx: sub.idx }); } catch (e) { r = { message: L('Aloqa xatosi.', 'Ошибка связи.') }; }
+        sub.sent = r.message; render();
+      };
+      $app.appendChild(b);
+    }
+  }
+
+  function statusBadge(st) {
+    return st === 'Tasdiqlandi' ? el('span', 'b ok', L('✓ tasdiqlangan', '✓ подтверждено'))
+      : st === 'Rad etildi' ? el('span', 'b bad', L('✗ rad etilgan', '✗ отклонено'))
+      : el('span', 'b wait', L('⏳ tasdiq kutilmoqda', '⏳ ждёт подтверждения'));
+  }
+  function renderHome() {
+    back(null);
+    $app.appendChild(header(shortName(S.name), S.cls + ' · ' + String(S.chorak || '').replace(/(\d)-chorak/, L('$1-chorak', '$1-я четверть'))));
+    if (S._stale) $app.appendChild(el('div', 'stale', L('yangilanmoqda…', 'обновляется…')));
+    const bn = el('div', 'banner' + (S.window.open ? '' : ' closed'));
+    bn.textContent = S.window.open
+      ? L("O'zgartirish mumkin: " + S.window.end + " gacha. Har bir kun uchun — faqat 1 marta.", 'Изменить можно до ' + S.window.end + '. Для каждого дня — только 1 раз.')
+      : L("O'zgartirish muddati tugagan. Savollar bo'lsa — kuratoringizga.", 'Срок изменений истёк. Вопросы — к куратору.');
+    $app.appendChild(bn);
+    if (!S.registered) {
+      const c = el('div', 'card'); c.appendChild(el('p', null, L('Siz hali klubga yozilmagansiz.', 'Вы ещё не записаны в клубы.')));
+      if (S.window.open) { const b = el('button', 'btn full', L('Klubga yozilish', 'Записаться в клубы')); b.onclick = () => { view = 'reg'; sub = { draft: {} }; render(); }; c.appendChild(b); }
+      $app.appendChild(c); return;
+    }
+    const todayDay = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'][new Date(S.today + 'T12:00:00').getDay()];
+    S.days.forEach(d => {
+      const c = el('div', 'card day' + (d.lesson ? ' lesson' : ''));
+      const h = el('div', 'h'); h.appendChild(el('span', 'dn', dn(d.day)));
+      if (d.day === todayDay && !d.lesson && d.next && d.next.date === S.today) h.appendChild(el('span', 'today', L('bugun 15:45', 'сегодня 15:45')));
+      c.appendChild(h);
+      if (d.lesson) { c.appendChild(el('div', 'meta', L('Sinf darsi — klub yo’q', 'Урок класса — клуба нет'))); $app.appendChild(c); return; }
+      c.appendChild(el('div', 'cn', d.club ? d.club.name : '—'));
+      if (d.club) c.appendChild(el('div', 'meta', d.club.teacher + ' · ' + room(d.club.room)));
+      const r = el('div', 'row'); r.appendChild(statusBadge(d.status));
+      if (d.used) r.appendChild(el('span', 'b', L("o'zgartirilgan", 'изменено')));
+      c.appendChild(r);
+      if (d.att && d.att.n) {
+        const p = Math.round(d.att.k / d.att.n * 100);
+        const a = el('div', 'att'); a.appendChild(el('span', null, L('Davomat', 'Посещаемость') + ' ' + d.att.k + '/' + d.att.n));
+        const bar = el('div', 'bar'); const i = el('i'); i.style.width = p + '%'; if (p < 80) i.style.background = 'var(--wait)'; bar.appendChild(i); a.appendChild(bar);
+        a.appendChild(el('b', null, p + '%')); c.appendChild(a);
+      }
+      if (d.next) {
+        const n = el('div', 'next');
+        n.appendChild(el('b', null, L('Keyingi: ', 'Следующее: ') + human(d.next.date)));
+        if (d.next.topic) n.appendChild(document.createTextNode(' — ' + d.next.topic));
+        c.appendChild(n);
+      }
+      if (S.window.open && !d.used) {
+        const b = el('button', 'btn sec', L("O'zgartirish", 'Изменить'));
+        b.onclick = () => { view = 'pick'; sub = { day: d.day }; render(); };
+        c.appendChild(b);
+      }
+      $app.appendChild(c);
+    });
+  }
+
+  function optionsFor(day, chosen) {
+    const other = new Set(Object.keys(chosen).filter(d => d !== day).map(d => chosen[d]).filter(Boolean));
+    return (S.options[day] || []).filter(o => !other.has(o.id) && o.id !== chosen[day]);
+  }
+  function optButton(o, onPick, selected) {
+    const b = el('button', 'opt' + (selected ? ' sel' : '')); b.type = 'button'; b.disabled = o.free <= 0;
+    const t = el('span', 't'); t.appendChild(el('b', null, o.name)); t.appendChild(el('small', null, o.teacher + ' · ' + room(o.room))); b.appendChild(t);
+    const s = el('span', 's', o.free > 0 ? L(o.free + ' joy', 'мест: ' + o.free) : L("Joy yo'q", 'Мест нет'));
+    const bar = el('div', 'bar'); const i = el('i'); i.style.width = Math.min(100, (o.cap - o.free) / o.cap * 100) + '%'; bar.appendChild(i); s.appendChild(bar);
+    b.appendChild(s); b.onclick = () => onPick(o);
+    return b;
+  }
+  function renderPick() {
+    const day = sub.day;
+    back(() => { view = 'home'; render(); });
+    const cur = {}; S.days.forEach(d => { if (!d.lesson) cur[d.day] = d.clubId; });
+    const now = S.days.find(d => d.day === day);
+    $app.appendChild(header(dn(day), L('Hozir: ', 'Сейчас: ') + (now && now.club ? now.club.name : '—')));
+    $app.appendChild(el('div', 'banner', L("Diqqat: bu kunni faqat 1 marta o'zgartirish mumkin.", 'Внимание: этот день можно изменить только 1 раз.')));
+    const list = optionsFor(day, cur);
+    if (!list.length) { $app.appendChild(el('div', 'card center muted', L("Bu kunga bo'sh joyli klub qolmadi.", 'На этот день нет клубов со свободными местами.'))); return; }
+    list.sort((a, b) => (b.free > 0) - (a.free > 0) || a.name.localeCompare(b.name)).forEach(o => $app.appendChild(optButton(o, async (opt) => {
+      const ok = await confirmBox(L(dn(day) + ': ' + (now.club ? now.club.name : '—') + ' → ' + opt.name + "\n\nBu kunni boshqa o'zgartirib bo'lmaydi. Tasdiqlaysizmi?",
+        dn(day) + ': ' + (now.club ? now.club.name : '—') + ' → ' + opt.name + '\n\nБольше изменить этот день будет нельзя. Подтверждаете?'));
+      if (!ok) return;
+      let r = null; try { r = await api('change', { day: day, clubId: opt.id }); } catch (e) { r = { ok: false, message: L('Aloqa xatosi.', 'Ошибка связи.') }; }
+      if (r.ok) { haptic('success'); view = 'home'; setState(r); toast(L('Saqlandi. Yangi ustoz tasdiqlaydi.', 'Сохранено. Новый преподаватель подтвердит.')); }
+      else { haptic('error'); toast(r.message || 'Xatolik'); refresh(true); }
+    })));
+  }
+
+  function renderReg() {
+    const free = S.days.filter(d => !d.lesson).map(d => d.day);
+    const next = free.find(d => !sub.draft[d]);
+    back(() => { const done = free.filter(d => sub.draft[d]); if (done.length) { delete sub.draft[done[done.length - 1]]; render(); } else { view = 'home'; render(); } });
+    if (next) {
+      $app.appendChild(header(dn(next), L('Klub tanlang', 'Выберите клуб') + ' · ' + (free.indexOf(next) + 1) + '/' + free.length));
+      const list = optionsFor(next, sub.draft);
+      if (!list.length) { $app.appendChild(el('div', 'card center muted', L("Bu kunga bo'sh joyli klub qolmadi. Kuratoringizga murojaat qiling.", 'На этот день нет мест. Обратитесь к куратору.'))); return; }
+      list.sort((a, b) => (b.free > 0) - (a.free > 0) || a.name.localeCompare(b.name)).forEach(o => $app.appendChild(optButton(o, opt => { sub.draft[next] = opt.id; window.scrollTo(0, 0); render(); })));
+      return;
+    }
+    $app.appendChild(header(L('Tanlovingiz', 'Ваш выбор')));
+    const c = el('div', 'card');
+    free.forEach(d => { const o = (S.options[d] || []).find(x => x.id === sub.draft[d]); const r = el('div', 'row'); r.appendChild(el('b', null, dn(d) + ':')); r.appendChild(el('span', null, o ? o.name : '?')); c.appendChild(r); });
+    c.appendChild(el('p', 'muted', L("Tasdiqlangandan keyin o'zgartirib bo'lmaydi.", 'После подтверждения изменить нельзя.')));
+    const b = el('button', 'btn full', L('Tasdiqlash', 'Подтвердить'));
+    b.onclick = async () => {
+      b.disabled = true; b.textContent = L('Saqlanmoqda…', 'Сохранение…');
+      let r = null; try { r = await api('register', { choices: sub.draft }); } catch (e) { r = { ok: false, message: L('Aloqa xatosi.', 'Ошибка связи.') }; }
+      if (r.ok) { haptic('success'); view = 'home'; setState(r); toast(L('Yozildingiz!', 'Вы записаны!')); }
+      else { haptic('error'); toast(r.message || 'Xatolik'); sub.draft = {}; refresh(true).then(() => { view = 'reg'; render(); }); }
+    };
+    const again = el('button', 'btn ghost', L('Qaytadan tanlash', 'Выбрать заново')); again.onclick = () => { sub.draft = {}; render(); };
+    c.append(b, again); $app.appendChild(c);
+  }
+
+  /* ===== Namuna (brauzerda ?demo) ===== */
+  const DEMO_API = (function () {
+    const opts = d => ['AI club', 'Finance club', 'MUN club', 'Dream University club', 'Zakovat club', 'Debate club'].map((n, i) => ({ id: d.slice(0, 2) + i, name: n, teacher: ['Mr. Ravshan', "Mr. A'zamjon", 'Ms. Yulduz', 'Mr. Jahongir', 'Mr. Adhamjon', 'Mr. Farrux'][i], room: String(407 + i), free: i === 3 ? 0 : 25 - 5 * i % 23, cap: 25 }));
+    let st = { ok: true, linked: false };
+    const full = () => ({ ok: true, linked: true, role: 'student', name: "Namuna O'quvchi Ali o'g'li", cls: '10-C', chorak: '2-chorak, 2026–2027', busy: 'Juma', registered: true, today: '2026-11-16',
+      window: { open: true, end: '15.11 23:59' },
+      days: ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'].map((d, i) => d === 'Juma' ? { day: d, lesson: true } : { day: d, clubId: d.slice(0, 2) + i, club: { name: opts(d)[i].name, teacher: opts(d)[i].teacher, room: opts(d)[i].room }, status: ['Tasdiqlandi', '', 'Tasdiqlandi', 'Rad etildi'][i], used: i === 2, att: { k: [2, 1, 2, 0][i], n: [2, 2, 2, 0][i] }, next: { date: ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19'][i], topic: i === 0 ? "Prompt asoslari: rol, kontekst, format" : '' } }),
+      options: Object.fromEntries(['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba'].map(d => [d, opts(d)])) });
+    return (action, x) => new Promise(res => setTimeout(() => {
+      if (action === 'link') { if (x.code === '123456') { st = full(); res(st); } else res({ ok: false, message: L('Kod topilmadi.', 'Код не найден.') }); return; }
+      if (action === 'classes') return res({ ok: true, classes: { '10-C': [{ i: 0, name: 'Namuna Bir', taken: false }, { i: 1, name: 'Namuna Ikki', taken: true }], '9-A': [] } });
+      if (action === 'request') return res({ ok: true, message: L("So'rov kuratorga yuborildi.", 'Запрос отправлен куратору.') });
+      if (action === 'change') { const d = st.days.find(z => z.day === x.day); const o = st.options[x.day].find(z => z.id === x.clubId); d.clubId = o.id; d.club = { name: o.name, teacher: o.teacher, room: o.room }; d.status = ''; d.used = true; return res(st); }
+      res(st);
+    }, 300));
+  })();
+
+  /* ===== Ishga tushirish: oxirgi holat darhol, keyin yangilash ===== */
+  if (!INIT && !DEMO) { renderMsg(L("Ilovani Telegram ichidan oching (bot → «Klublarim»).", 'Откройте приложение внутри Telegram (бот → «Klublarim»).')); return; }
+  const cached = !DEMO && store.get('mini_state');
+  if (cached) { try { S = JSON.parse(cached); S._stale = true; render(); } catch (e) { S = null; } }
+  refresh(!!S);
+})();
+</script>
+</body>
+</html>
