@@ -107,6 +107,53 @@
   .tools { display: flex; gap: 8px; margin-bottom: 10px; }
   .tools select { flex: 1; min-width: 0; padding: 9px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 14px; }
   .b.acc { color: var(--accent-ink); background: var(--accent); }
+  /* Rahbariyat statistikasi */
+  .seg.two { grid-template-columns: 1fr 1fr; }
+  .upd { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12.5px; margin: -2px 4px 10px; }
+  .upd button { border: 0; background: none; color: var(--link); font-weight: 600; font-size: 13px; cursor: pointer; padding: 4px 0; }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .kpi { background: var(--card); border-radius: 14px; padding: 12px; min-width: 0; }
+  .kpi .l { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .kpi .v { font-size: 26px; font-weight: 800; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .s { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .kpi .bar { margin-top: 8px; }
+  .kpi .bar i { background: var(--accent); }
+  .ch h3 { margin: 0 0 2px; font-size: 15px; font-weight: 700; }
+  .ch .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 10px; }
+  .hb { padding: 5px 0; }
+  .hb .t { display: flex; gap: 8px; font-size: 13.5px; align-items: baseline; }
+  .hb .t span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hb .t small { color: var(--muted); font-size: 12px; }
+  .hb .t b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .hb .tr { position: relative; height: 8px; border-radius: 4px; background: var(--line); margin-top: 4px; }
+  .hb .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); min-width: 2px; }
+  .hb .tr .ref { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: .35; }
+  .stk { display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px; background: var(--card); margin: 4px 0 10px; }
+  .stk i { display: block; height: 100%; }
+  .lg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
+  .lg span { display: inline-flex; align-items: center; gap: 6px; }
+  .lg span::before { content: ''; width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+  .al { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .al:first-of-type { border-top: 0; }
+  .al .ic { flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+  .al .ic.wait { background: rgba(247, 144, 9, .15); color: #b54708; }
+  .al .ic.bad { background: rgba(240, 68, 56, .14); color: #b42318; }
+  .al .ic.ok { background: rgba(18, 183, 106, .14); color: #067647; }
+  .al .tx { flex: 1; min-width: 0; }
+  .al b { font-variant-numeric: tabular-nums; }
+  svg.cols { display: block; width: 100%; height: auto; overflow: visible; }
+  svg.cols text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+  svg.cols text.v { fill: var(--ink); font-weight: 600; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); font-weight: 700; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  .tbl td { padding: 8px 4px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .tbl td.num, .tbl th.num { text-align: right; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl .w { color: #b54708; font-weight: 700; } .tbl .x { color: #b42318; font-weight: 700; }
+  details.cls { border-top: 1px solid var(--line); padding: 8px 0; }
+  details.cls summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+  details.cls p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+  .tip { position: absolute; z-index: 20; background: #101828; color: #fff; font-size: 12.5px; font-weight: 600; padding: 6px 9px; border-radius: 8px; pointer-events: none; max-width: 240px; }
 </style>
 </head>
 <body>
@@ -146,7 +193,7 @@
 
   /* ===== Holat ===== */
   let S = null, view = 'home', sub = {};
-  const TV = { teacher: store.get('mini_teacher') || '', key: null, seg: 'tarkib', appr: {}, draft: {}, attDate: null };
+  const TV = { teacher: store.get('mini_teacher') || '', key: null, seg: 'tarkib', appr: {}, draft: {}, attDate: null, rtab: store.get('mini_rtab') || 'stats', stats: null, statsBusy: false };
   function toast(msg) { const t = el('div', 'toast', msg); document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
   function haptic(kind) { try { tg.HapticFeedback.notificationOccurred(kind); } catch (e) {} }
   function confirmBox(text) {
@@ -290,7 +337,7 @@
     S.days.forEach(d => {
       const c = el('div', 'card day' + (d.lesson ? ' lesson' : ''));
       const h = el('div', 'h'); h.appendChild(el('span', 'dn', dn(d.day)));
-      if (d.day === todayDay && !d.lesson && d.next && d.next.date === S.today) h.appendChild(el('span', 'today', L('bugun 15:45', 'сегодня 15:45')));
+      if (d.day === todayDay && !d.lesson && d.next && d.next.date === S.today) h.appendChild(el('span', 'today', L('bugun', 'сегодня')));
       c.appendChild(h);
       if (d.lesson) { c.appendChild(el('div', 'meta', L('Sinf darsi — klub yo’q', 'Урок класса — клуба нет'))); $app.appendChild(c); return; }
       c.appendChild(el('div', 'cn', d.club ? d.club.name : '—'));
@@ -411,9 +458,18 @@
   function renderTeacherHome() {
     back(null);
     const D = T(), boss = D.user.role === 'rahbar';
-    $app.appendChild(header(D.teacher || S.name, L('Ustoz kabineti', 'Кабинет преподавателя') + ' · ' + String(D.chorak).replace(/(\d)-chorak/, L('$1-chorak', '$1-я четверть'))));
+    const ch = String(D.chorak).replace(/(\d)-chorak/, L('$1-chorak', '$1-я четверть'));
+    $app.appendChild(header(boss ? S.name : (D.teacher || S.name), (boss ? L('Rahbariyat paneli', 'Панель руководства') : L('Ustoz kabineti', 'Кабинет преподавателя')) + ' · ' + ch));
     if (S._stale) $app.appendChild(el('div', 'stale', L('yangilanmoqda…', 'обновляется…')));
     if (boss) {
+      const sg = el('div', 'seg two');
+      [['stats', L('Statistika', 'Статистика')], ['teachers', L('Ustozlar', 'Преподаватели')]].forEach(([v, label]) => {
+        const b = el('button', null, label); b.type = 'button'; b.setAttribute('aria-pressed', String(TV.rtab === v));
+        b.onclick = () => { TV.rtab = v; store.set('mini_rtab', v); render(); window.scrollTo(0, 0); };
+        sg.appendChild(b);
+      });
+      $app.appendChild(sg);
+      if (TV.rtab === 'stats') return renderStats();
       const sel = el('select', 'pick'); const o0 = el('option', null, L('Ustozni tanlang…', 'Выберите преподавателя…')); o0.value = ''; sel.appendChild(o0);
       D.teachers.forEach(t => { const o = el('option', null, t); o.value = t; o.selected = t === D.teacher; sel.appendChild(o); });
       sel.onchange = async () => { TV.teacher = sel.value; store.set('mini_teacher', TV.teacher); sel.disabled = true; await refresh(); };
@@ -429,7 +485,7 @@
       const k = counts(s), next = s.dates.find(d => d >= D.today), pct = groupPct(s), ms = missed(s).length;
       const c = el('div', 'card day grp'); c.setAttribute('role', 'button'); c.tabIndex = 0;
       const h = el('div', 'h'); h.appendChild(el('span', 'dn', dn(s.day)));
-      if (next === D.today) h.appendChild(el('span', 'today', L('bugun 15:45', 'сегодня 15:45')));
+      if (next === D.today) h.appendChild(el('span', 'today', L('bugun', 'сегодня')));
       c.appendChild(h);
       c.appendChild(el('div', 'cn', s.name));
       c.appendChild(el('div', 'meta', room(s.room) + ' · ' + L(k.n + '/' + s.capacity + " o'quvchi", 'учеников: ' + k.n + '/' + s.capacity)));
@@ -584,12 +640,183 @@
     });
   }
 
+  /* ===== Rahbariyat: statistika ===== */
+  const tipEl = el('div', 'tip'); tipEl.hidden = true; document.body.appendChild(tipEl);
+  document.addEventListener('pointerover', e => {
+    const t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tipEl.hidden = true; return; }
+    tipEl.textContent = t.getAttribute('data-tip'); tipEl.hidden = false;
+    const r = t.getBoundingClientRect();
+    tipEl.style.left = Math.max(8, Math.min(innerWidth - tipEl.offsetWidth - 8, r.left + r.width / 2 - tipEl.offsetWidth / 2)) + 'px';
+    tipEl.style.top = (r.top + scrollY - tipEl.offsetHeight - 8) + 'px';
+  });
+  document.addEventListener('scroll', () => { tipEl.hidden = true; }, { passive: true });
+  const shortDate = s => { const d = new Date(s + 'T12:00:00'); return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0'); };
+  const pctTxt = v => v == null ? '—' : v + '%';
+  function loadStats(force) {
+    if (TV.statsBusy) return; TV.statsBusy = true;
+    api('stats').then(r => {
+      TV.statsBusy = false;
+      if (r && r.ok) { TV.stats = r.stats; store.set('mini_stats', JSON.stringify(r.stats)); if (view === 'home' && TV.rtab === 'stats') render(); if (force) toast(L('Yangilandi', 'Обновлено')); }
+      else toast((r && r.message) || 'Xatolik');
+    }).catch(() => { TV.statsBusy = false; toast(L('Aloqa xatosi.', 'Ошибка связи.')); });
+  }
+  function chartCard(title, sub) { const c = el('div', 'card ch'); c.appendChild(el('h3', null, title)); if (sub) c.appendChild(el('p', 'sub', sub)); $app.appendChild(c); return c; }
+  function hbar(parent, label, small, value, max, text, opts) {
+    opts = opts || {};
+    const r = el('div', 'hb'); r.setAttribute('data-tip', opts.tip || (label + ': ' + text));
+    const t = el('div', 't'); const sp = el('span', null, label); if (small) { sp.appendChild(document.createTextNode(' ')); sp.appendChild(el('small', null, small)); }
+    t.append(sp, el('b', null, text)); r.appendChild(t);
+    const tr = el('div', 'tr'); const i = el('i'); i.style.width = (max ? Math.min(100, value / max * 100) : 0) + '%'; if (opts.color) i.style.background = opts.color; tr.appendChild(i);
+    if (opts.ref != null) { const f = el('span', 'ref'); f.style.left = 'calc(' + opts.ref + '% - 1px)'; tr.appendChild(f); }
+    r.appendChild(tr); parent.appendChild(r);
+  }
+  function columns(parent, data, opts) {
+    const W = 320, H = 150, top = 18, bot = 22, n = data.length, max = opts.max || Math.max(1, ...data.map(d => d.v || 0));
+    const slot = W / Math.max(n, 1), bw = Math.min(34, slot * 0.6);
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'cols');
+    const y = v => top + (H - top - bot) * (1 - v / max);
+    const mk = (tag, a, txt) => { const e = document.createElementNS(ns, tag); Object.keys(a).forEach(k => e.setAttribute(k, a[k])); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; };
+    mk('line', { x1: 0, x2: W, y1: H - bot, y2: H - bot, stroke: 'currentColor', 'stroke-opacity': .25 });
+    if (opts.ref != null) { mk('line', { x1: 0, x2: W, y1: y(opts.ref), y2: y(opts.ref), stroke: 'currentColor', 'stroke-opacity': .45, 'stroke-dasharray': '4 4' }); mk('text', { x: W, y: y(opts.ref) - 4, 'text-anchor': 'end' }, opts.refLabel); }
+    data.forEach((d, i) => {
+      const cx = slot * i + slot / 2, v = d.v == null ? 0 : d.v, h = Math.max(2, (H - top - bot) * v / max);
+      const col = opts.color ? opts.color(d) : 'var(--accent)';
+      const p = mk('path', { d: 'M' + (cx - bw / 2) + ' ' + (H - bot) + 'V' + (H - bot - h + 4) + 'q0 -4 4 -4h' + (bw - 8) + 'q4 0 4 4V' + (H - bot) + 'Z', fill: col });
+      p.setAttribute('data-tip', d.tip || (d.x + ': ' + d.label));
+      const hit = mk('rect', { x: slot * i, y: top - 16, width: slot, height: H - top - bot + 16, fill: 'transparent' }); hit.setAttribute('data-tip', d.tip || (d.x + ': ' + d.label));
+      mk('text', { x: cx, y: H - bot - h - 5, 'text-anchor': 'middle', class: 'v' }, d.label);
+      mk('text', { x: cx, y: H - 6, 'text-anchor': 'middle' }, d.x);
+    });
+    svg.style.color = 'var(--ink)'; parent.appendChild(svg);
+  }
+
+  function renderStats() {
+    let ST = TV.stats;
+    if (!ST) { try { ST = JSON.parse(store.get('mini_stats') || 'null'); } catch (e) { ST = null; } if (!TV.statsBusy) loadStats(); }
+    if (!ST) { $app.append(el('div', 'skel'), el('div', 'skel'), el('div', 'skel')); return; }
+    const upd = el('div', 'upd'); upd.appendChild(el('span', null, (TV.stats ? '' : L('saqlangan · ', 'сохранено · ')) + L('Holat: ', 'Данные на ') + ST.at));
+    const rb = el('button', null, '↻ ' + L('Yangilash', 'Обновить')); rb.onclick = () => { rb.textContent = L('Yuklanmoqda…', 'Загрузка…'); loadStats(true); }; upd.appendChild(rb); $app.appendChild(upd);
+
+    // KPI
+    const k = el('div', 'kpis');
+    const kpi = (l, v, s, p) => { const c = el('div', 'kpi'); c.append(el('div', 'l', l), el('div', 'v', v), el('div', 's', s)); if (p != null) { const b = el('div', 'bar'); const i = el('i'); i.style.width = Math.min(100, p) + '%'; b.appendChild(i); c.appendChild(b); } k.appendChild(c); };
+    kpi(L("Yozilgan", 'Записались'), pctTxt(ST.students.pct), ST.students.reg + ' / ' + ST.students.total + L(" o'quvchi", ' учеников'), ST.students.pct);
+    kpi(L("To'lish", 'Заполненность'), pctTxt(ST.groups.pct), ST.groups.seats + ' / ' + ST.groups.cap + L(' joy', ' мест'), ST.groups.pct);
+    kpi(L('Davomat', 'Посещаемость'), pctTxt(ST.attendance.pct), ST.attendance.k + ' / ' + (ST.attendance.k + ST.attendance.y + ST.attendance.s) + L(' belgi', ' отметок'), ST.attendance.pct);
+    const tgp = ST.telegram.total ? Math.round(ST.telegram.students / ST.telegram.total * 100) : null;
+    kpi('Telegram', pctTxt(tgp), ST.telegram.students + ' / ' + ST.telegram.total + L(" o'quvchi", ' учеников'), tgp);
+    $app.appendChild(k);
+
+    // Muammolar
+    const al = chartCard(L('Diqqat talab qiladi', 'Требует внимания'), ST.attendance.today ? L('Bugun ' + ST.attendance.today + " ta mashg'ulot · davomat kiritildi: " + ST.attendance.todayDone, 'Сегодня занятий: ' + ST.attendance.today + ' · отмечено: ' + ST.attendance.todayDone) : '');
+    const items = [
+      [ST.approvals.wait, 'wait', '⏳', L("o'quvchi ustoz tasdig'ini kutmoqda", 'учеников ждут подтверждения преподавателя')],
+      [ST.attendance.missing, 'bad', '!', L("o'tgan mashg'ulotda davomat kiritilmagan", 'прошедших занятий без отметок')],
+      [ST.risk.count, 'bad', '↓', L("o'quvchida davomat 80% dan past", 'учеников с посещаемостью ниже 80%')],
+      [ST.students.total - ST.students.reg, 'wait', '✗', L("o'quvchi hali klubga yozilmagan", 'учеников ещё не записаны')],
+      [ST.groups.empty, 'wait', '0', L("guruh bo'sh", 'групп пустые')],
+      [ST.groups.full, 'ok', '●', L("guruh to'lgan (" + (ST.groups.cap / Math.max(1, ST.groups.count)) + ' joy)', 'групп заполнены')]
+    ].filter(x => x[0] > 0);
+    if (!items.length) { const r = el('div', 'al'); r.append(el('span', 'ic ok', '✓'), el('span', 'tx', L("Muammo yo'q", 'Проблем нет'))); al.appendChild(r); }
+    items.forEach(([n, tone, ic, txt]) => { const r = el('div', 'al'); const tx = el('span', 'tx'); tx.append(el('b', null, n + ' '), document.createTextNode(txt)); r.append(el('span', 'ic ' + tone, ic), tx); al.appendChild(r); });
+    if (ST.window) al.appendChild(el('p', 'sub', ST.window.open ? L("Klub almashtirish oynasi ochiq: " + ST.window.end + ' gacha', 'Окно смены клубов открыто до ' + ST.window.end) : L('Klub almashtirish oynasi yopiq', 'Окно смены клубов закрыто'))).style.margin = '8px 0 0';
+
+    // Haftalik davomat
+    const wk = chartCard(L('Haftalik davomat', 'Посещаемость по неделям'), L("Kelganlar ulushi, hafta boshlanishi bo'yicha. Chiziq — 80% (sertifikat chegarasi).", 'Доля пришедших по неделям. Линия — 80% (порог сертификата).'));
+    if (!ST.attendance.weeks.length) wk.appendChild(el('p', 'muted', L("Hali davomat kiritilmagan.", 'Отметок пока нет.')));
+    else columns(wk, ST.attendance.weeks.map(w => ({ x: shortDate(w.week), v: w.pct, label: pctTxt(w.pct), tip: shortDate(w.week) + ': ' + w.k + '/' + w.m + ' (' + pctTxt(w.pct) + ')' })), { max: 100, ref: 80, refLabel: '80%' });
+
+    // Sinflar
+    const cl = chartCard(L("Sinflar bo'yicha yozilish", 'Запись по классам'), L("Yozilgan / sinfdagi o'quvchilar", 'Записались / всего в классе'));
+    ST.classes.forEach(c => hbar(cl, c.cls, '', c.reg, c.total, c.reg + '/' + c.total, { color: c.reg === c.total ? 'var(--ok)' : null, tip: c.cls + ': ' + c.reg + '/' + c.total + (c.total - c.reg ? L(' · qolgan ' + (c.total - c.reg), ' · осталось ' + (c.total - c.reg)) : '') }));
+
+    // Klublar to'lishi
+    const cf = chartCard(L("Klublar: o'quvchilar soni", 'Клубы: число учеников'), L("Ikki guruh yig'indisi / joylar", 'Сумма двух групп / мест'));
+    ST.clubs.slice().sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).forEach(c => hbar(cf, c.name, c.teacher, c.n, c.cap, c.n + '/' + c.cap, { tip: c.name + ' — ' + c.teacher + ': ' + c.n + '/' + c.cap + (c.wait ? L(' · kutmoqda ' + c.wait, ' · ждут ' + c.wait) : '') }));
+
+    // Klublar davomati
+    const withAtt = ST.clubs.filter(c => c.att != null);
+    const ca = chartCard(L('Klublar: davomat', 'Клубы: посещаемость'), L('Chiziq — 80%', 'Линия — 80%'));
+    if (!withAtt.length) ca.appendChild(el('p', 'muted', L("Hali davomat kiritilmagan.", 'Отметок пока нет.')));
+    withAtt.sort((a, b) => a.att - b.att).forEach(c => hbar(ca, c.name, '', c.att, 100, c.att + '%', { ref: 80, color: c.att < 80 ? 'var(--wait)' : null }));
+
+    // Tasdiq holati
+    const A = ST.approvals, at = A.ok + A.wait + A.bad;
+    const ap = chartCard(L('Ustoz tasdig’i', 'Подтверждение преподавателей'), at + L(" ta joy (o'quvchi × kun)", ' мест (ученик × день)'));
+    if (at) {
+      const sk = el('div', 'stk');
+      [[A.ok, 'var(--ok)', L('tasdiqlangan', 'подтверждено')], [A.wait, 'var(--wait)', L('kutmoqda', 'ожидает')], [A.bad, 'var(--bad)', L('rad etilgan', 'отклонено')]].forEach(([n, c, t]) => { if (!n) return; const i = el('i'); i.style.cssText = 'flex:' + n + ';background:' + c; i.setAttribute('data-tip', t + ': ' + n + ' (' + Math.round(n / at * 100) + '%)'); sk.appendChild(i); });
+      ap.appendChild(sk);
+      const lg = el('div', 'lg');
+      [[A.ok, 'var(--ok)', L('Tasdiqlangan', 'Подтверждено')], [A.wait, 'var(--wait)', L('Kutmoqda', 'Ожидает')], [A.bad, 'var(--bad)', L('Rad etilgan', 'Отклонено')]].forEach(([n, c, t]) => { const s2 = el('span', null, t + ' ' + n); s2.style.setProperty('--c', c); lg.appendChild(s2); });
+      ap.appendChild(lg);
+    }
+
+    // Kunlar
+    const dy = chartCard(L("Kunlar bo'yicha", 'По дням недели'), L("Shu kuni klubga keladigan o'quvchilar", 'Учеников в клубах в этот день'));
+    columns(dy, ST.days.map(d => ({ x: dn(d.day).slice(0, LANG === 'ru' ? 2 : 3), v: d.students, label: String(d.students), tip: dn(d.day) + ': ' + d.students + L(" o'quvchi · ", ' учеников · ') + d.groups + L(' guruh', ' групп') })), {});
+
+    // Ustozlar
+    const tc = chartCard(L('Ustozlar', 'Преподаватели'), L("Kutmoqda — tasdiqlanmagan; Yo'q — davomat kiritilmagan mashg'ulotlar", 'Ждут — не подтверждены; Нет — занятия без отметок'));
+    const tb = el('table', 'tbl'); const hr = el('tr');
+    [[L('Ustoz', 'Преподаватель'), ''], [L("O'q.", 'Уч.'), 'num'], [L('Kut.', 'Ждут'), 'num'], [L("Yo'q", 'Нет'), 'num'], ['%', 'num']].forEach(([t, c]) => hr.appendChild(el('th', c, t)));
+    tb.appendChild(hr);
+    ST.teachers.forEach(t => {
+      const tr = el('tr');
+      tr.append(el('td', null, t.name), el('td', 'num', String(t.n)), el('td', 'num' + (t.wait ? ' w' : ''), String(t.wait)), el('td', 'num' + (t.missing ? ' x' : ''), String(t.missing)), el('td', 'num', pctTxt(t.att)));
+      tr.style.cursor = 'pointer'; tr.onclick = () => { TV.teacher = t.name; store.set('mini_teacher', t.name); TV.rtab = 'teachers'; store.set('mini_rtab', 'teachers'); refresh(); };
+      tb.appendChild(tr);
+    });
+    tc.appendChild(tb);
+    tc.appendChild(el('p', 'sub', L("Ustoz qatorini bosing — uning guruhlari ochiladi.", 'Нажмите на строку — откроются группы преподавателя.'))).style.margin = '8px 0 0';
+
+    // Xavf guruhi
+    if (ST.risk.count) {
+      const rk = chartCard(L('Davomati 80% dan past', 'Посещаемость ниже 80%'), L("Sertifikat xavf ostida · eng pastidan", 'Сертификат под угрозой · от самых низких'));
+      const box = el('div', 'list'); box.style.margin = '0';
+      ST.risk.list.forEach(r => { const li = el('div', 'li'); const w = el('div', 'who'); w.appendChild(el('b', null, r.name)); w.appendChild(el('small', null, r.cls + ' · ' + r.club + ' · ' + dn(r.day))); li.append(w, el('span', 'b bad', r.k + '/' + r.m + ' · ' + r.pct + '%')); box.appendChild(li); });
+      rk.appendChild(box);
+      if (ST.risk.count > ST.risk.list.length) rk.appendChild(el('p', 'sub', L('Yana ' + (ST.risk.count - ST.risk.list.length) + ' ta', 'Ещё ' + (ST.risk.count - ST.risk.list.length)))).style.margin = '8px 0 0';
+    }
+
+    // Yozilmaganlar
+    const miss = ST.classes.filter(c => c.total > c.reg);
+    if (miss.length) {
+      const ym = chartCard(L('Hali yozilmaganlar', 'Ещё не записались'), (ST.students.total - ST.students.reg) + L(" o'quvchi · sinfni bosing", ' учеников · нажмите на класс'));
+      miss.forEach(c => { const d = el('details', 'cls'); d.appendChild(el('summary', null, c.cls + ' — ' + (c.total - c.reg))); d.appendChild(el('p', null, c.missing.join(', '))); ym.appendChild(d); });
+    }
+
+    // Telegram
+    const tg = chartCard('Telegram', '');
+    const rows = [[L("O'quvchilar bog'langan", 'Ученики привязаны'), ST.telegram.students + ' / ' + ST.telegram.total], [L("Ustozlar bog'langan", 'Преподаватели привязаны'), ST.telegram.staff + ' / ' + ST.telegram.staffTotal], [L("Klub almashtirishlar (chorak)", 'Смен клубов за четверть'), ST.telegram.changes + L(' · bot orqali ', ' · через бот ') + ST.telegram.viaBot]];
+    const tb2 = el('table', 'tbl'); rows.forEach(([a, b]) => { const tr = el('tr'); tr.append(el('td', null, a), el('td', 'num', b)); tb2.appendChild(tr); }); tg.appendChild(tb2);
+  }
+
   /* ===== Namuna (brauzerda ?demo) ===== */
   const DEMO_API = (function () {
     const opts = d => ['AI club', 'Finance club', 'MUN club', 'Dream University club', 'Zakovat club', 'Debate club'].map((n, i) => ({ id: d.slice(0, 2) + i, name: n, teacher: ['Mr. Ravshan', "Mr. A'zamjon", 'Ms. Yulduz', 'Mr. Jahongir', 'Mr. Adhamjon', 'Mr. Farrux'][i], room: String(407 + i), free: i === 3 ? 0 : 25 - 5 * i % 23, cap: 25 }));
     let st = { ok: true, linked: false };
     const WEEK = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
     let staffCache = null;
+    function demoStats() {
+      const cls = ['9-A', '9-B', '9-C', '9-D', '10-A', '10-B', '10-C', '10-D', '11-A', '11-B'], tot = [17, 17, 23, 21, 16, 19, 24, 21, 26, 25];
+      const clubs = ['IQ & Intellectual Club', 'Ecology & Social Impact Club', 'English quiz club', 'Magazine club', 'Startup club', 'Finance club', 'Press club', 'Art club', 'SAT Math club', 'Dream University club', 'Cinemood club', 'Culture connection club', 'AI club', 'Philosophy club', 'Psychology club', 'MUN club', 'Zakovat club', 'Chess club', 'Public speaking club', 'Debate club'];
+      const tch = ['Mr. Hikmatulloh', 'Mr. Dilshod', "Mr. A'zamjon", 'Ms. Dilnura', 'Mr. Jahongir', 'Ms. Mohinur', 'Mr. Ravshan', 'Ms. Yulduz', 'Mr. Adhamjon', 'Mr. Farrux'];
+      return { at: '12.11 09:40', chorak: '2-chorak', today: '2026-11-12', window: { open: true, end: '15.11 23:59' },
+        students: { total: 209, reg: 196, pct: 94 },
+        classes: cls.map((c, i) => ({ cls: c, total: tot[i], reg: tot[i] - [0, 1, 2, 0, 1, 3, 0, 2, 4, 0][i], missing: Array.from({ length: [0, 1, 2, 0, 1, 3, 0, 2, 4, 0][i] }, (_, j) => 'Namuna ' + (j + 1)) })),
+        groups: { count: 40, seats: 784, cap: 1000, pct: 78, full: 6, few: 3, empty: 1 },
+        approvals: { ok: 702, wait: 71, bad: 11 },
+        attendance: { k: 1418, y: 171, s: 44, pct: 87, due: 48, held: 44, missing: 4, today: 9, todayDone: 2,
+          weeks: [['2026-11-09', 91], ['2026-11-16', 86], ['2026-11-23', 84], ['2026-11-30', 78], ['2026-12-07', 88]].map(([w, p]) => ({ week: w, k: p * 4, m: 400, pct: p })) },
+        risk: { count: 3, list: [{ cls: '10-B', name: 'Namuna Bir', club: 'Chess club', day: 'Seshanba', k: 2, m: 5, pct: 40 }, { cls: '9-C', name: 'Namuna Ikki', club: 'Art club', day: 'Juma', k: 3, m: 5, pct: 60 }, { cls: '11-A', name: 'Namuna Uch', club: 'MUN club', day: 'Dushanba', k: 3, m: 4, pct: 75 }] },
+        clubs: clubs.map((n, i) => ({ name: n, teacher: tch[Math.floor(i / 2)], n: [50, 21, 38, 30, 47, 50, 22, 44, 49, 50, 41, 26, 50, 33, 46, 40, 35, 29, 42, 36][i], cap: 50, wait: i % 5 === 0 ? 7 : i % 3, att: [92, 88, 85, 79, 90, 94, 83, 76, 89, 91, 86, 81, 95, 87, 90, 84, 88, 72, 85, 89][i] })),
+        teachers: tch.map((t, i) => ({ name: t, groups: 4, n: 60 + i * 9 % 40, wait: [7, 2, 0, 9, 1, 0, 3, 14, 0, 2][i], missing: [0, 1, 0, 2, 0, 0, 0, 1, 0, 0][i], att: [90, 82, 92, 80, 90, 84, 91, 87, 80, 87][i] })),
+        days: ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'].map((d, i) => ({ day: d, groups: 8, students: [168, 151, 160, 149, 156][i] })),
+        telegram: { students: 41, total: 196, staff: 4, staffTotal: 11, changes: 23, viaBot: 9 } };
+    }
     function staffDemo(boss, teacher) {
       const q = { start: '2026-11-09', end: '2026-12-26', holidays: ['2026-12-08'] }, today = '2026-11-18';
       const datesFor = day => { const out = [], d = new Date(q.start + 'T12:00:00'), e = new Date(q.end + 'T12:00:00'); while (d <= e) { const s = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); if (WEEK[d.getDay()] === day && q.holidays.indexOf(s) === -1) out.push(s); d.setDate(d.getDate() + 1); } return out; };
@@ -620,6 +847,7 @@
       if (st.role === 'staff') {
         if (action === 'me') { st = staffDemo(st.staff.user.role === 'rahbar', x.teacher); return res(st); }
         if (action === 'approve') { const s = st.staff.sessions.find(z => z.clubId === x.payload.clubId && z.day === x.payload.day); x.payload.items.forEach(i => { const q = s.students.find(z => z.cls === i.cls && z.name === i.name); q.approval = i.status; q.note = i.note; }); return res(Object.assign({}, st, { saved: x.payload.items.length })); }
+        if (action === 'stats') return res({ ok: true, stats: demoStats() });
         if (action === 'plan') return res({ ok: true });
         if (action === 'attend') return res({ ok: true, saved: x.payload.marks.length });
       }
