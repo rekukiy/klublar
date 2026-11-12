@@ -655,11 +655,14 @@
   const pctTxt = v => v == null ? '—' : v + '%';
   function loadStats(force) {
     if (TV.statsBusy) return; TV.statsBusy = true;
+    TV.statsErr = null;
+    const done = () => { TV.statsBusy = false; if (view === 'home' && TV.rtab === 'stats') render(); };
     api('stats').then(r => {
-      TV.statsBusy = false;
-      if (r && r.ok) { TV.stats = r.stats; store.set('mini_stats', JSON.stringify(r.stats)); if (view === 'home' && TV.rtab === 'stats') render(); if (force) toast(L('Yangilandi', 'Обновлено')); }
-      else toast((r && r.message) || 'Xatolik');
-    }).catch(() => { TV.statsBusy = false; toast(L('Aloqa xatosi.', 'Ошибка связи.')); });
+      if (r && r.ok && r.stats && r.stats.students) { TV.stats = r.stats; store.set('mini_stats', JSON.stringify(r.stats)); if (force) toast(L('Yangilandi', 'Обновлено')); }
+      else if (r && r.ok) TV.statsErr = L("Server eski versiyada. Apps Script'da: Deploy → Manage deployments → ✏️ → New version → Deploy.", 'Сервер в старой версии. В Apps Script: Deploy → Manage deployments → ✏️ → New version → Deploy.');
+      else TV.statsErr = (r && r.message) || 'Xatolik';
+      done();
+    }).catch(() => { TV.statsErr = L("Aloqa xatosi. Qayta urinib ko'ring.", 'Ошибка связи. Попробуйте ещё раз.'); done(); });
   }
   function chartCard(title, sub) { const c = el('div', 'card ch'); c.appendChild(el('h3', null, title)); if (sub) c.appendChild(el('p', 'sub', sub)); $app.appendChild(c); return c; }
   function hbar(parent, label, small, value, max, text, opts) {
@@ -694,8 +697,13 @@
 
   function renderStats() {
     let ST = TV.stats;
-    if (!ST) { try { ST = JSON.parse(store.get('mini_stats') || 'null'); } catch (e) { ST = null; } if (!TV.statsBusy) loadStats(); }
-    if (!ST) { $app.append(el('div', 'skel'), el('div', 'skel'), el('div', 'skel')); return; }
+    if (!ST) { try { ST = JSON.parse(store.get('mini_stats') || 'null'); } catch (e) { ST = null; } if (ST && !ST.students) ST = null; if (!TV.statsBusy && !TV.statsErr) loadStats(); }
+    if (TV.statsErr) {
+      const c = el('div', 'card center'); c.appendChild(el('p', null, TV.statsErr));
+      const b = el('button', 'btn', L('Qayta urinish', 'Повторить')); b.onclick = () => { TV.statsErr = null; render(); loadStats(true); }; c.appendChild(b);
+      $app.appendChild(c); if (!ST) return;
+    }
+    if (!ST) { $app.append(el('p', 'muted center', L("Statistika hisoblanmoqda… (5–15 soniya)", 'Считаем статистику… (5–15 секунд)')), el('div', 'skel'), el('div', 'skel'), el('div', 'skel')); return; }
     const upd = el('div', 'upd'); upd.appendChild(el('span', null, (TV.stats ? '' : L('saqlangan · ', 'сохранено · ')) + L('Holat: ', 'Данные на ') + ST.at));
     const rb = el('button', null, '↻ ' + L('Yangilash', 'Обновить')); rb.onclick = () => { rb.textContent = L('Yuklanmoqda…', 'Загрузка…'); loadStats(true); }; upd.appendChild(rb); $app.appendChild(upd);
 
